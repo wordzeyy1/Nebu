@@ -1,0 +1,19 @@
+import os
+from supabase import create_client, Client
+
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_SECRET_KEY = os.getenv("SUPABASE_SECRET_KEY")
+
+
+if not SUPABASE_URL:
+    raise RuntimeError("SUPABASE_URL is not set")
+
+if not SUPABASE_SECRET_KEY:
+    raise RuntimeError("SUPABASE_SECRET_KEY is not set")
+
+
+supabase: Client = create_client(
+    SUPABASE_URL,
+    SUPABASE_SECRET_KEY,
+)
