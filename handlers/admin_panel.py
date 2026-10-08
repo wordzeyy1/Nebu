@@ -27,6 +27,7 @@ from database import (
     get_pending_deposits,
     update_deposit_status,
     get_deposit,
+    get_deposit_details,
     add_wallet_balance,
     record_wallet_transaction,
     get_pending_refunds,
@@ -43,6 +44,11 @@ from database import (
     admin_wallet_adjustment,
 )
 
+from handlers.event_broadcast import (
+    broadcast_deposit,
+    broadcast_withdrawal,
+    broadcast_refund,
+)
 
 # =====================================
 # ADMIN MENU
@@ -508,9 +514,17 @@ async def deposit_callback(
             "Approved",
         )
 
-        user_id, amount = get_deposit(
+        deposit_details = get_deposit_details(
             deposit_id
         )
+
+        if not deposit_details:
+            await query.edit_message_text(
+                "❌ Deposit could not be found."
+            )
+            return
+
+        user_id, amount, crypto_amount, network = deposit_details
 
         add_wallet_balance(
             user_id,
@@ -522,6 +536,13 @@ async def deposit_callback(
             transaction_type="Deposit",
             amount=amount,
             reason="Crypto Deposit Approved",
+        )
+        await broadcast_deposit(
+            bot=context.bot,
+            user_id=user_id,
+            network=network,
+            usd_amount=float(amount),
+            crypto_amount=float(crypto_amount),
         )
 
         # =====================================
@@ -657,6 +678,12 @@ async def refund_callback(
             transaction_type="Refund",
             amount=amount,
             reason="Refund Approved",
+        )
+        
+        await broadcast_refund(
+            bot=context.bot,
+            user_id=user_id,
+            refund_amount=amount,
         )
 
         await context.bot.send_message(
@@ -882,6 +909,14 @@ async def receive_withdrawal_txid(
         transaction_type="Withdrawal",
         amount=amount,
         reason="Withdrawal Approved",
+    )
+
+    await broadcast_withdrawal(
+        bot=context.bot,
+        user_id=user_id,
+        cryptocurrency=cryptocurrency,
+        usd_amount=amount,
+        crypto_amount=crypto_amount,
     )
 
     # =====================================
