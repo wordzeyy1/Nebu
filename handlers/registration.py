@@ -1,3 +1,5 @@
+import os
+
 from telegram import Update
 from telegram.ext import (
     ConversationHandler,
@@ -11,8 +13,11 @@ from telegram import ReplyKeyboardMarkup
 
 from config import ADMIN_ID
 
-from handlers.navigation import clear_navigation, push_page
+REGISTRATION_ENABLED = (
+    os.getenv("REGISTRATION_ENABLED", "true").strip().lower() == "true"
+)
 
+from handlers.navigation import clear_navigation, push_page
 from handlers.main_menu import show_main_menu
 
 from database import (
@@ -81,22 +86,31 @@ async def registration_guard(update, state):
 # =====================================
 
 async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    
-    print(f"Telegram User ID: {update.effective_user.id}")
-    
-    print(f"User exists: {user_exists(update.effective_user.id)}")
-    
+
+    user_id = update.effective_user.id
+
+    print(f"Telegram User ID: {user_id}")
+    print(f"User exists: {user_exists(user_id)}")
+
     if update.message.text == "❌ Cancel":
         return await cancel(update, context)
 
-    if user_exists(update.effective_user.id):
+    # Existing users can still access the bot
+    if user_exists(user_id):
         await update.message.reply_text(
             "✅ You are already registered.",
             reply_markup=(
-                admin_menu
-                if update.effective_user.id == ADMIN_ID
-                else main_menu
+                admin_menu if user_id == ADMIN_ID else main_menu
             ),
+        )
+        return ConversationHandler.END
+
+    # Block new registrations when disabled
+    if not REGISTRATION_ENABLED:
+        await update.message.reply_text(
+            "🚫 New registrations are temporarily closed.\n\n"
+            "Please try again later.",
+            reply_markup=main_menu,
         )
         return ConversationHandler.END
 
@@ -219,7 +233,23 @@ async def country(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     print("USER DATA:", context.user_data)
     print("REFERRER:", context.user_data.get("referrer_id"))
-    
+
+
+    # Stop registration if it was disabled during the process
+    if not REGISTRATION_ENABLED:
+        context.user_data.pop("name", None)
+        context.user_data.pop("email", None)
+        context.user_data.pop("phone", None)
+        context.user_data.pop("referrer_id", None)
+
+        await update.message.reply_text(
+            "🚫 New registrations are temporarily closed.\n\n"
+            "Your registration was not completed.",
+            reply_markup=main_menu,
+        )
+
+        return ConversationHandler.END
+
     # Save user
     add_user(
         user_id,
