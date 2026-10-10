@@ -88,7 +88,12 @@ async def registration_guard(update, state):
 async def register(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user_id = update.effective_user.id
+    
 
+    print("REGISTRATION FILE: UPDATED VERSION")
+    print("REGISTRATION_ENABLED:", REGISTRATION_ENABLED)
+    print("USER ID:", user_id)
+    
     print(f"Telegram User ID: {user_id}")
     print(f"User exists: {user_exists(user_id)}")
 
