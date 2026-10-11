@@ -1,7 +1,4 @@
 import os
-REGISTRATION_ENABLED = (
-    os.getenv("REGISTRATION_ENABLED", "true").strip().lower() == "true"
-)
 
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import ContextTypes, MessageHandler, filters
@@ -15,23 +12,23 @@ from handlers.navigation import (
     push_page,
 )
 
-    # =====================================
-    # UNREGISTERED USER
-    # =====================================
+REGISTRATION_ENABLED = (
+    os.getenv("REGISTRATION_ENABLED", "true").strip().lower() == "true"
+)
 
-    else:
+# =====================================
+# UNREGISTERED USER MENU
+# =====================================
 
-        if REGISTRATION_ENABLED:
-            keyboard = unregistered_menu
-        else:
-            keyboard = ReplyKeyboardMarkup(
-                [
-                    ["💬 Chat with Support"],
-                    ["ℹ️ Help"],
-                ],
-                resize_keyboard=True,
-            )
-    
+unregistered_menu = ReplyKeyboardMarkup(
+    [
+        ["🆕 New User Registration"],
+        ["💬 Chat with Support"],
+        ["ℹ️ Help"],
+    ],
+    resize_keyboard=True,
+)
+
 # =====================================
 # SHOW MAIN MENU
 # =====================================
@@ -43,9 +40,7 @@ async def show_main_menu(
 
     print("========== MAIN MENU OPENED ==========")
 
-    # Reset navigation
     clear_navigation(context)
-
     push_page(context, "main_menu")
 
     print(
@@ -57,29 +52,26 @@ async def show_main_menu(
 
     user_id = update.effective_user.id
 
-    # =====================================
     # ADMIN
-    # =====================================
-
     if user_id == ADMIN_ID:
-
         keyboard = admin_menu
 
-    # =====================================
     # REGISTERED USER
-    # =====================================
-
     elif user_exists(user_id):
-
         keyboard = main_menu
 
-    # =====================================
     # UNREGISTERED USER
-    # =====================================
-
     else:
-
-        keyboard = unregistered_menu
+        if REGISTRATION_ENABLED:
+            keyboard = unregistered_menu
+        else:
+            keyboard = ReplyKeyboardMarkup(
+                [
+                    ["💬 Chat with Support"],
+                    ["ℹ️ Help"],
+                ],
+                resize_keyboard=True,
+            )
 
     await update.message.reply_text(
         "🏠 Main Menu",
