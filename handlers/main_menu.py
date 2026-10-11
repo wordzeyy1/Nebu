@@ -1,3 +1,8 @@
+import os
+REGISTRATION_ENABLED = (
+    os.getenv("REGISTRATION_ENABLED", "true").strip().lower() == "true"
+)
+
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import ContextTypes, MessageHandler, filters
 
@@ -10,21 +15,23 @@ from handlers.navigation import (
     push_page,
 )
 
+    # =====================================
+    # UNREGISTERED USER
+    # =====================================
 
-# =====================================
-# UNREGISTERED USER MENU
-# =====================================
+    else:
 
-unregistered_menu = ReplyKeyboardMarkup(
-    [
-        ["🆕 New User Registration"],
-        ["💬 Chat with Support"],
-        ["ℹ️ Help"],
-    ],
-    resize_keyboard=True,
-)
-
-
+        if REGISTRATION_ENABLED:
+            keyboard = unregistered_menu
+        else:
+            keyboard = ReplyKeyboardMarkup(
+                [
+                    ["💬 Chat with Support"],
+                    ["ℹ️ Help"],
+                ],
+                resize_keyboard=True,
+            )
+    
 # =====================================
 # SHOW MAIN MENU
 # =====================================
