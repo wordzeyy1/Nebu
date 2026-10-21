@@ -32,6 +32,10 @@ from handlers.ban_guard import (
     global_ban_check,
 )
 
+from handlers.maintenance import (
+    register_maintenance_handlers,
+)
+
 # =====================================
 # USER HANDLERS
 # =====================================
@@ -381,6 +385,12 @@ def main():
         .token(BOT_TOKEN)
         .build()
     )
+    
+    # =====================================
+    # MAINTENANCE MODE
+    # =====================================
+
+    register_maintenance_handlers(app)
 
     # =====================================
     # GLOBAL BAN GUARD
@@ -388,7 +398,7 @@ def main():
     #
     # IMPORTANT:
     #
-    # The guard runs in group -1, before
+    # The guard runs in group -3, before
     # normal handlers in group 0.
     #
     # If the user is banned,
@@ -403,14 +413,14 @@ def main():
             filters.ALL,
             global_ban_check,
         ),
-        group=-1,
+        group=-3,
     )
 
     app.add_handler(
         CallbackQueryHandler(
             global_ban_check,
         ),
-        group=-1,
+        group=-3,
     )
 
     # =====================================
